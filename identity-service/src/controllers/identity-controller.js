@@ -1,6 +1,6 @@
 const RefreshToken = require("../models/RefreshToken");
-
-const generateTokens = require("../utils/generateToken");
+const User = require("../models/User");
+const generateTokens = require("../utils/generateTokens");
 const logger = require("../utils/logger");
 const { validateRegistration, validatelogin } = require("../utils/validation");
 
@@ -103,3 +103,4 @@ const loginUser = async (req, res) => {
 
 
 // user logout
+module.exports = { resgiterUser, loginUser };
