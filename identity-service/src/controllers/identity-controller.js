@@ -47,8 +47,8 @@ const resgiterUser = async (req, res) => {
       message: "Internal server error",
     });
   }
-};
 
+};
 
 // user login
 const loginUser = async (req, res) => {
@@ -159,10 +159,8 @@ const refreshTokenUser = async (req, res) => {
       success: false,
       message: "Internal server error",
     });
-  }
-};
-
-
+  }};
+  
 // user logout
 const logoutUser = async (req, res) => {
   logger.info("Logout endpoint hit...");
