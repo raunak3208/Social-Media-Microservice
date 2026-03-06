@@ -107,7 +107,7 @@ const getPost = async (req, res) => {
         success: false,
       });
     }
-    
+
     await req.redisClient.setex(
       cachedPost,
       3600,
@@ -125,4 +125,32 @@ const getPost = async (req, res) => {
 };
 
 
-module.exports = { createPost, getAllPosts, getPost };
+const deletePost = async (req, res) => {
+  try {
+    const post = await Post.findOneAndDelete({
+      _id: req.params.id,
+      user: req.user.userId,
+    });
+
+    if (!post) {
+      return res.status(404).json({
+        message: "Post not found",
+        success: false,
+      });
+    }
+
+    await invalidatePostCache(req, req.params.id);
+    res.json({
+      message: "Post deleted successfully",
+    });
+  } catch (e) {
+    logger.error("Error deleting post", error);
+    res.status(500).json({
+      success: false,
+      message: "Error deleting post",
+    });
+  }
+};
+
+
+module.exports = { createPost, getAllPosts, getPost, deletePost };
