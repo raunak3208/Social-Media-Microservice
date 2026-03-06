@@ -39,7 +39,7 @@ app.use((req, res, next) => {
 
 const ddosLimiter = rateLimit({
   windowMs: 1000, // 1 second
-  max: 10, // 10 requests per second per IP
+  max: 1000, // 10 requests per second per IP
   standardHeaders: true,
   legacyHeaders: false,
   handler: (req, res) => {
