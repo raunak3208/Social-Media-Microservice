@@ -3,6 +3,16 @@ const logger = require("../utils/logger");
 
 const { validateCreatePost } = require("../utils/validation");
 
+// invalidate the cache for posts when a new post is created
+async function invalidatePostCache(req, input) {
+  const cachedKey = `post:${input}`;
+  await req.redisClient.del(cachedKey);
+
+  const keys = await req.redisClient.keys("posts:*");
+  if (keys.length > 0) {
+    await req.redisClient.del(keys);
+  }
+}
 
 const createPost = async (req, res) => {
   logger.info("Create post endpoint hit");

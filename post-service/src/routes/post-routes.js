@@ -11,6 +11,6 @@ const router = express();
 router.use(authenticateRequest);
 
 router.post("/create-post", createPost);
-router.get("/posts", getAllPosts);
+router.get("/all-posts", getAllPosts);
 
 module.exports = router;
