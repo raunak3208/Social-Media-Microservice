@@ -51,5 +51,24 @@ const uploadMedia = async (req, res) => {
   }
 };
 
+const getAllMedias = async (req, res) => {
+  try {
+     const result =  await Media.find({userId : req.user.userId});
 
-module.exports = { uploadMedia };
+        if(result.length ===0){
+           return res.status(404).json({
+                success:false,
+                message:"Cann't find any media for this user"
+            })
+        }
+  } catch (e) {
+    logger.error("Error fetching medias", error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching medias",
+    });
+  }
+};
+
+
+module.exports = { uploadMedia, getAllMedias };

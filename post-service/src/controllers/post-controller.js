@@ -1,9 +1,8 @@
 const Post = require("../models/Post");
 const logger = require("../utils/logger");
-
+const { publishEvent } = require("../utils/rabbitmq");
 const { validateCreatePost } = require("../utils/validation");
 
-// invalidate the cache for posts when a new post is created
 async function invalidatePostCache(req, input) {
   const cachedKey = `post:${input}`;
   await req.redisClient.del(cachedKey);
@@ -34,6 +33,14 @@ const createPost = async (req, res) => {
     });
 
     await newlyCreatedPost.save();
+
+    await publishEvent("post.created", {
+      postId: newlyCreatedPost._id.toString(),
+      userId: newlyCreatedPost.user.toString(),
+      content: newlyCreatedPost.content,
+      createdAt: newlyCreatedPost.createdAt,
+    });
+
     await invalidatePostCache(req, newlyCreatedPost._id.toString());
     logger.info("Post created successfully", newlyCreatedPost);
     res.status(201).json({
@@ -41,11 +48,11 @@ const createPost = async (req, res) => {
       message: "Post created successfully",
     });
   } catch (e) {
-  logger.error("Error creating post", e);
-  res.status(500).json({
-    success: false,
-    message: "Error creating post",
-  });
+    logger.error("Error creating post", error);
+    res.status(500).json({
+      success: false,
+      message: "Error creating post",
+    });
   }
 };
 
@@ -124,7 +131,6 @@ const getPost = async (req, res) => {
   }
 };
 
-
 const deletePost = async (req, res) => {
   try {
     const post = await Post.findOneAndDelete({
@@ -139,6 +145,13 @@ const deletePost = async (req, res) => {
       });
     }
 
+    //publish post delete method ->
+    await publishEvent("post.deleted", {
+      postId: post._id.toString(),
+      userId: req.user.userId,
+      mediaIds: post.mediaIds,
+    });
+
     await invalidatePostCache(req, req.params.id);
     res.json({
       message: "Post deleted successfully",
@@ -151,6 +164,5 @@ const deletePost = async (req, res) => {
     });
   }
 };
-
 
 module.exports = { createPost, getAllPosts, getPost, deletePost };
