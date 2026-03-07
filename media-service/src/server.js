@@ -28,7 +28,7 @@ app.use((req, res, next) => {
   next();
 });
 
-//*** Homework - implement Ip based rate limiting for sensitive endpoints
+// implement Ip based rate limiting for sensitive endpoints
 
 app.use("/api/media", mediaRoutes);
 
