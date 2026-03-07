@@ -47,6 +47,6 @@ router.post( "/upload", authenticateRequest, (req, res, next) => {
   uploadMedia
 );
 
-router.get("/get", authenticateRequest, getAllMedias);
+router.get("/get", authenticateRequest);
 
 module.exports = router;
