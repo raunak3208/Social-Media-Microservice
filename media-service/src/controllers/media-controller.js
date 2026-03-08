@@ -26,7 +26,7 @@ const uploadMedia = async (req, res) => {
       `Cloudinary upload successfully. Public Id: - ${cloudinaryUploadResult.public_id}`
     );
 
-     const newlyCreatedMedia = new Media({
+    const newlyCreatedMedia = new Media({
       publicId: cloudinaryUploadResult.public_id,
       originalName: originalname,
       mimeType: mimetype,
@@ -53,15 +53,22 @@ const uploadMedia = async (req, res) => {
 
 const getAllMedias = async (req, res) => {
   try {
-     const result =  await Media.find({userId : req.user.userId});
+    const result = await Media.find({ userId: req.user.userId });
 
-        if(result.length ===0){
-           return res.status(404).json({
-                success:false,
-                message:"Cann't find any media for this user"
-            })
-        }
-  } catch (e) {
+    if (result.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Cann't find any media for this user"
+      })
+    }
+
+    // Added this return statement to actually send back the fetched data
+    res.status(200).json({
+      success: true,
+      data: result
+    });
+
+  } catch (error) {
     logger.error("Error fetching medias", error);
     res.status(500).json({
       success: false,
@@ -69,6 +76,5 @@ const getAllMedias = async (req, res) => {
     });
   }
 };
-
 
 module.exports = { uploadMedia, getAllMedias };
