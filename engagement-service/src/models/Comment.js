@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const commentSchema = new mongoose.Schema(
     {
@@ -18,11 +18,15 @@ const commentSchema = new mongoose.Schema(
             type: String,
             required: true,
             trim: true,
-            minLength: 1,
-            maxLength: 500,
+            minlength: 1,
+            maxlength: 500,
         },
     },
-    { 
-        timestamps: true 
-    }
+    { timestamps: true }
 );
+
+// Optional: Index on postId to optimize fetching all comments for a post
+commentSchema.index({ postId: 1, createdAt: -1 });
+
+const Comment = mongoose.model("Comment", commentSchema);
+module.exports = Comment;

@@ -1,29 +1,23 @@
-const Comment = require('../models/commentModel');
-const logger = require('../utils/logger');
-const { publishEvent } = require('../utils/rabbitmq');
+const Comment = require("../models/Comment");
+const logger = require("../utils/logger");
+const { publishEvent } = require("../utils/rabbitmq");
 
 const addComment = async (req, res, next) => {
     try {
-        const userId = req.user.userId;
+        const userId = req.headers["x-user-id"];
         const { postId, text, postOwnerId } = req.body;
 
-        if(!userId) {
-            return res.status(401).json({ 
-                success: false, 
-                message: "Unauthorized" 
-            });
+        if (!userId) {
+            return res.status(401).json({ success: false, message: "Unauthorized" });
         }
 
-        const comment = new Comment({
-            userId,
-            postId,
-            text,
-        });
+        const comment = new Comment({ userId, postId, text });
         await comment.save();
+
         logger.info(`User ${userId} commented on post ${postId}`);
 
-        if (postOwnerId && postOwnerId != userId) {
-            await publishEvent('post_commented', {
+        if (postOwnerId && postOwnerId !== userId) {
+            await publishEvent("post.commented", {
                 postId,
                 actorId: userId,
                 postOwnerId,
@@ -31,14 +25,10 @@ const addComment = async (req, res, next) => {
                 timestamp: new Date()
             });
         }
-        res.status(201).json({
-            success: true,
-            comment
-        });
 
+        res.status(201).json({ success: true, comment });
     } catch (error) {
-        logger.error("Error adding comment", error);
-        next(error); // Pass the error to the error handling middleware
+        next(error);
     }
 };
 
@@ -47,39 +37,25 @@ const deleteComment = async (req, res, next) => {
         const userId = req.headers["x-user-id"];
         const { id } = req.params;
 
-        if(!userId) {
-            return res.status(401).json({ 
-                success: false, 
-                message: "Unauthorized" 
-            });
+        if (!userId) {
+            return res.status(401).json({ success: false, message: "Unauthorized" });
         }
 
-        const comment = await Comment.findOne({ _id: id, userId });
-        
+        const comment = await Comment.findOne({ _id: id });
+
         if (!comment) {
-            return res.status(404).json({
-                success: false,
-                message: "Comment not found or you don't have permission to delete this comment",
-            });
+            return res.status(404).json({ success: false, message: "Comment not found" });
         }
 
-        if(comment.userId.toString() !== userId) {
-            return res.status(403).json({
-                success: false,
-                message: "Forbidden: You can only delete your own comments",
-            });
+        if (comment.userId.toString() !== userId) {
+            return res.status(403).json({ success: false, message: "Forbidden" });
         }
-        
+
         await Comment.findOneAndDelete({ _id: id });
         logger.info(`User ${userId} deleted comment ${id}`);
-        res.status(200).json({
-            success: true,
-            message: "Comment deleted successfully"
-        });
-        
+        res.status(200).json({ success: true, message: "Comment deleted successfully" });
     } catch (error) {
-        logger.error("Error deleting comment", error);
-        next(error);    
+        next(error);
     }
 };
 
@@ -111,9 +87,4 @@ const getCommentsByPostId = async (req, res, next) => {
     }
 };
 
-
-module.exports = {
-    addComment,
-    deleteComment,
-    getCommentsByPostId
-};
+module.exports = { addComment, deleteComment, getCommentsByPostId };
