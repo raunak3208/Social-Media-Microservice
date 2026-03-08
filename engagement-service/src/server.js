@@ -59,7 +59,7 @@ app.use(ddosLimiter);
 
 //IP based Sensitive Endpoint Limiter 
 const sensitiveEndpointsLimiter = rateLimit({
-    windowMs: 1 * 60 * 1000, // 15 minutes
+    windowMs: 15 * 60 * 1000, // 15 minutes
     max: 50, // max 50 requests per IP
     standardHeaders: true,
     legacyHeaders: false,
@@ -75,8 +75,7 @@ const sensitiveEndpointsLimiter = rateLimit({
     }),
 });
 
-// routes -> pass redisclient to routes 
-
+//routes -> pass redisclient to routes
 app.use(
     "/api/engagement/reactions",
     sensitiveEndpointsLimiter,
@@ -96,3 +95,33 @@ app.use(
     },
     commentRoutes
 );
+
+app.use(
+    "/api/engagement/counts",
+    (req, res, next) => {
+        req.redisClient = redisClient;
+        next();
+    },
+    countRoutes
+);
+
+app.use(errorHandler);
+
+async function startServer() {
+    try {
+        await connectToRabbitMQ();
+        app.listen(PORT, () => {
+            logger.info(`Engagement service running on port ${PORT}`);
+        });
+    } catch (error) {
+        logger.error("Failed to connect to server", error);
+        process.exit(1);
+    }
+}
+
+startServer();
+
+//unhandled promise rejection
+process.on("unhandledRejection", (reason, promise) => {
+    logger.error("Unhandled Rejection at", promise, "reason:", reason);
+});
