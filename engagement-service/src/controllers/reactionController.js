@@ -66,3 +66,54 @@ const toggleLike = async (req, res,next) => {
         next(error);
     }
 };
+
+const toggleDislike = async (req, res,next) => {
+    try {
+        const userId = req.user.userId;
+        const { postId } = req.body;
+        
+        if(!userId) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized"
+            });
+        } 
+        // check if dislike already exists
+        const existingDislike = await Dislike.findOne({ userId, postId });
+        
+        if (existingDislike) {
+            // If dislike exists, remove it (toggle off)
+            await Dislike.findOneAndDelete({ userId, postId });
+            logger.info(`Dislike removed for user ${userId} on post ${postId}`);
+            return res.status(200).json({
+                success: true,
+                message: "Dislike removed",
+            });
+        }
+        
+        // if disliking , verfy and remove like if exists
+        await Like.findOneAndDelete({ userId, postId });
+
+        // Add new dislike
+        const newDislike = new Dislike({ userId, postId });
+        await newDislike.save();
+        logger.info(`Dislike added for user ${userId} on post ${postId}`);
+
+        res.status(200).json({
+            success: true,
+            message: "Post disliked",
+        });
+    } catch (error) {
+        if (error.code === 11000) {
+            return res.status(400).json({ 
+                success: false, message: "Duplicate dislike" 
+            });
+        }
+        next(error);
+    }
+};
+
+module.exports = {
+    toggleLike,
+    toggleDislike
+};
