@@ -51,8 +51,8 @@ app.use(ddosLimiter);
 
 //IP based Sensitive Endpoint Limiter 
 const sensitiveEndpointsLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 50,
+    windowMs: 1 * 60 * 1000, // 1 minutes
+    max: 100,
     standardHeaders: true,
     legacyHeaders: false,
     handler: (req, res) => {
