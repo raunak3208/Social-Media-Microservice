@@ -72,6 +72,30 @@ const markAsRead = async (req, res, next) => {
     } catch (error) {
         next(error);
     }
-}
+};
 
-module.exports = { getNotification, markAsRead };
+const markAllAsRead = async (req, res, next) => {
+    try {
+        const userId = req.headers["x-user-id"];
+
+        if (!userId) {
+            return res.status(401).json({ 
+                success: false, 
+                message: "Unauthorized" 
+            });
+        }
+
+        await Notification.updateMany({ userId, isRead: false }, { isRead: true });
+
+        logger.info(`User ${userId} marked all notifications as read`);
+        res.status(200).json({ 
+            success: true, 
+            message: "All notifications marked as read" 
+        });
+
+    } catch (error) {
+        next(error);
+    }
+};
+
+module.exports = { getNotification, markAsRead, markAllAsRead };
