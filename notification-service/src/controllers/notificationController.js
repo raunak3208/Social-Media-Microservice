@@ -79,18 +79,18 @@ const markAllAsRead = async (req, res, next) => {
         const userId = req.headers["x-user-id"];
 
         if (!userId) {
-            return res.status(401).json({ 
-                success: false, 
-                message: "Unauthorized" 
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized"
             });
         }
 
         await Notification.updateMany({ userId, isRead: false }, { isRead: true });
 
         logger.info(`User ${userId} marked all notifications as read`);
-        res.status(200).json({ 
-            success: true, 
-            message: "All notifications marked as read" 
+        res.status(200).json({
+            success: true,
+            message: "All notifications marked as read"
         });
 
     } catch (error) {
@@ -98,4 +98,35 @@ const markAllAsRead = async (req, res, next) => {
     }
 };
 
-module.exports = { getNotification, markAsRead, markAllAsRead };
+const deleteNotification = async (req, res, next) => {
+    try {
+        const userId = req.headers["x-user-id"];
+        const { id } = req.params;
+
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized"
+            });
+        }
+
+         const notification = await Notification.findOneAndDelete({ _id: id, userId });
+
+        if (!notification) {
+            return res.status(404).json({ 
+                success: false, 
+                message: "Notification not found or access denied" 
+            });
+        }
+
+        logger.info(`User ${userId} deleted notification ${id}`);
+        res.status(200).json({ 
+            success: true,
+            message: "Notification deleted" 
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
+module.exports = { getNotification, markAsRead, markAllAsRead, deleteNotification };
