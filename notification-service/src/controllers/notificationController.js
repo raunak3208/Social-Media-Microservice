@@ -26,7 +26,7 @@ const getNotification = async (req, res, next) => {
             .limit(parseInt(limit));
 
         const total = await Notification.countDocuments(filterOptions);
-        const unreadCount = await Notification.countDocuments({userId, isRead: false});
+        const unreadCount = await Notification.countDocuments({ userId, isRead: false });
 
         res.status(200).json({
             success: true,
@@ -35,7 +35,7 @@ const getNotification = async (req, res, next) => {
             pagination: {
                 total,
                 page: parseInt(page),
-                pages: Math.ceil(total/limit),
+                pages: Math.ceil(total / limit),
             },
         });
 
@@ -44,4 +44,34 @@ const getNotification = async (req, res, next) => {
     }
 };
 
-module.exports = { getNotification };
+const markAsRead = async (req, res, next) => {
+    try {
+        const userId = req.headers["x-user-id"];
+        const { id } = req.params;
+
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized"
+            });
+        }
+
+        const notification = await Notification.findOneAndUpdate(
+            { _id: id, userId },
+            { isRead: true },
+            { new: true }
+        );
+
+        if (!notification) {
+            return res.status(404).json({
+                success: false, message: "Notification not found or access denied"
+            });
+        }
+        logger.info(`User ${userId} marked notification ${id} as read`);
+        res.status(200).json({ success: true, notification });
+    } catch (error) {
+        next(error);
+    }
+}
+
+module.exports = { getNotification, markAsRead };
