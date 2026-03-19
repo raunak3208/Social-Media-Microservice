@@ -1,45 +1,27 @@
 const amqp = require("amqplib");
 const logger = require("./logger");
 
-let connection = null;
-let channel = null;
+let channel, connection;
 
-const EXCHANGE_NAME = "engagement_events";
-
-const connectToRabbitMQ = async () => {
+const connectRabbitMQ = async () => {
     try {
-        connection = await amqp.connect(process.env.RABBITMQ_URL);
+        const amqpServer = process.env.RABBITMQ_URL || "amqp://localhost:5672";
+        connection = await amqp.connect(amqpServer);
         channel = await connection.createChannel();
 
-        // Setup an exchange for engagement events
-        await channel.assertExchange(EXCHANGE_NAME, "topic", { durable: false });
-
-        logger.info("Connected to RabbitMQ for Engagement Service");
+        logger.info("Feed-service connected to RabbitMQ");
         return channel;
     } catch (error) {
-        logger.error("Error connecting to RabbitMQ", error);
+        logger.error("Failed to connect to RabbitMQ from feed-service:", error);
         throw error;
     }
 };
 
-const publishEvent = async (routingKey, message) => {
-    if (!channel) {
-        logger.warn("RabbitMQ channel not established, event not published");
-        return;
-    }
+const getChannel = () => {
+    return channel;
+}
 
-    try {
-        channel.publish(
-            EXCHANGE_NAME,
-            routingKey,
-            Buffer.from(JSON.stringify(message))
-        );
-        logger.info(`Event published: ${routingKey}`);
-    } catch (error) {
-        logger.error("Error publishing event", error);
-    }
+module.exports = {
+    connectRabbitMQ,
+    getChannel
 };
-
-const getChannel = () => channel;
-
-module.exports = { connectToRabbitMQ, getChannel, publishEvent };
