@@ -209,6 +209,7 @@ app.use(
   })
 );
 
+
 //setting up proxy for our feed service
 app.use(
   "/v1/feed",
@@ -230,29 +231,6 @@ app.use(
     },
   })
 );
-
-app.use(
-  "/v1/chat",
-  validateToken,
-  proxy(process.env.FEED_SERVICE_URL, {
-    ...proxyOptions,
-    proxyReqOptDecorator: (proxyReqOpts, srcReq) => {
-      proxyReqOpts.headers["Content-Type"] = "application/json";
-      proxyReqOpts.headers["x-user-id"] = srcReq.user.userId;
-
-      return proxyReqOpts;
-    },
-    userResDecorator: (proxyRes, proxyResData, userReq, userRes) => {
-      logger.info(
-        `Response received from Chat service: ${proxyRes.statusCode}`
-      );
-
-      return proxyResData;
-    },
-  })
-);
-// setting up proxy service for chat service
-
 
 app.use(errorHandler);
 
@@ -281,9 +259,6 @@ app.listen(PORT, () => {
   );
   logger.info(
     `Feed service is running on port ${process.env.FEED_SERVICE_URL}`
-  );
-   logger.info(
-    `Chat service is running on port ${process.env.CHAT_SERVICE_URL}`
   );
   logger.info(`Redis Url ${process.env.REDIS_URL}`);
 });
