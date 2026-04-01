@@ -36,7 +36,13 @@ const sendRequest = async (req, res, next) => {
         const request = new MessageRequest({ senderId, receiverId });
         await request.save();
 
-       
+        // Publish event to RabbitMQ for notification service
+        await publishEvent("message.request.received", {
+            senderId,
+            receiverId,
+            requestId: request._id,
+            timestamp: new Date()
+        });
 
         logger.info(`Message Request sent from ${senderId} to ${receiverId}`);
         res.status(201).json({ success: true, message: "Message request sent successfully", data: request });
